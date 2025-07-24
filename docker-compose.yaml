@@ -1,4 +1,13 @@
 services:
+#  cibseven-init:
+#    image: alpine:latest
+#    container_name: cibseven-init
+#    user: "1000:1000"
+#    volumes:
+#      - ./cibseven_libs:/tmp
+#    command: >
+#      sh -c "wget -O /tmp/mariadb-java-client-3.4.2.jar #https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.4.2/mariadb-java-client-3.4.2.jar"
+
   mariadb:
     image: mariadb:11.8
     container_name: mariadb
@@ -28,12 +37,14 @@ services:
     image: cibseven/cibseven:tomcat-2.1.0-SNAPSHOT
     container_name: cibseven
     depends_on:
+#      cibseven-init:
+#        condition: service_completed_successfully
       mariadb:
         condition: service_healthy
     ports:
       - "8080:8080"
     volumes:
-      - /home/oleg/cibseven/cibseven/mariadb/cibseven.sh:/camunda/cibseven.sh
+      - ./cibseven_libs/mariadb-java-client-3.4.2.jar:/camunda/lib/mariadb-java-client-3.4.2.jar
     environment:
       # Database configuration
       DB_DRIVER: org.mariadb.jdbc.Driver
@@ -41,37 +52,19 @@ services:
       DB_USERNAME: cibseven
       DB_PASSWORD: cibseven
       
-      # Automatic schema management - CIB seven will create tables automatically
-#      DB_VALIDATE_ON_MIGRATE: false
-#      DB_SCHEMA_UPDATE: true
-      
       # For run distribution (Spring Boot based)
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.mariadb.jdbc.Driver
       SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/cibseven
       SPRING_DATASOURCE_USERNAME: cibseven
       SPRING_DATASOURCE_PASSWORD: cibseven
       
-      # Additional JVM options
-#      JAVA_OPTS: >
-#        -Xmx1024m
-#        -Ddatabase.url=jdbc:mariadb://mariadb:3306/cibseven
-#        -Ddatabase.username=cibseven
-#        -Ddatabase.password=cibseven
-#        -Ddatabase.driver=org.mariadb.jdbc.Driver
       # Wait for database
-#      WAIT_FOR: mariadb:3306
-#      WAIT_FOR_TIMEOUT: 60
+      WAIT_FOR: mariadb:3306
+      WAIT_FOR_TIMEOUT: 60
       
     networks:
       - cibseven-network
-#    restart: unless-stopped
-
-    # Add this for debugging - comment out when not needed
-#    command: ["bash", "-c", "tail -f /dev/null"]
-    # Alternative: keep container running with interactive bash
-    # command: ["bash"]
-    # tty: true
-    # stdin_open: true
+    restart: unless-stopped
     
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/webapp/"]
