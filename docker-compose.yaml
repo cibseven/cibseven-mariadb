@@ -7,7 +7,6 @@ services:
     command: >
       sh -c "
         if [ ! -f /tmp/mariadb-java-client-3.4.2.jar ]; then
-        if [ ! -f /tmp/mariadb-java-client-3.4.2.jar ]; then
           echo 'Downloading MariaDB JDBC driver...' &&
           curl -o /tmp/mariadb-java-client-3.4.2.jar https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.4.2/mariadb-java-client-3.4.2.jar &&
           echo 'MariaDB JDBC driver downloaded successfully'
