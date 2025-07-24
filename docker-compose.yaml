@@ -1,0 +1,88 @@
+services:
+  mariadb:
+    image: mariadb:11.8
+    container_name: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: cibseven
+      MYSQL_USER: cibseven
+      MYSQL_PASSWORD: cibseven
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --transaction-isolation=READ-COMMITTED
+      --max-connections=200
+      --innodb-buffer-pool-size=256M
+    networks:
+      - cibseven-network
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-padmin"]
+      timeout: 2s
+      retries: 10
+
+  cibseven:
+    image: cibseven/cibseven:tomcat-2.1.0-SNAPSHOT
+    container_name: cibseven
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - /home/oleg/cibseven/cibseven/mariadb/cibseven.sh:/camunda/cibseven.sh
+    environment:
+      # Database configuration
+      DB_DRIVER: org.mariadb.jdbc.Driver
+      DB_URL: jdbc:mariadb://mariadb:3306/cibseven
+      DB_USERNAME: cibseven
+      DB_PASSWORD: cibseven
+      
+      # Automatic schema management - CIB seven will create tables automatically
+#      DB_VALIDATE_ON_MIGRATE: false
+#      DB_SCHEMA_UPDATE: true
+      
+      # For run distribution (Spring Boot based)
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.mariadb.jdbc.Driver
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/cibseven
+      SPRING_DATASOURCE_USERNAME: cibseven
+      SPRING_DATASOURCE_PASSWORD: cibseven
+      
+      # Additional JVM options
+#      JAVA_OPTS: >
+#        -Xmx1024m
+#        -Ddatabase.url=jdbc:mariadb://mariadb:3306/cibseven
+#        -Ddatabase.username=cibseven
+#        -Ddatabase.password=cibseven
+#        -Ddatabase.driver=org.mariadb.jdbc.Driver
+      # Wait for database
+#      WAIT_FOR: mariadb:3306
+#      WAIT_FOR_TIMEOUT: 60
+      
+    networks:
+      - cibseven-network
+#    restart: unless-stopped
+
+    # Add this for debugging - comment out when not needed
+#    command: ["bash", "-c", "tail -f /dev/null"]
+    # Alternative: keep container running with interactive bash
+    # command: ["bash"]
+    # tty: true
+    # stdin_open: true
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/webapp/"]
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mariadb_data:
+    driver: local
+
+networks:
+  cibseven-network:
+    driver: bridge
