@@ -52,7 +52,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - cibseven_libs:/camunda/lib:ro
+      - ./cibseven_libs/mariadb-java-client-3.4.2.jar:/camunda/lib
     environment:
       # Database configuration
       DB_DRIVER: org.mariadb.jdbc.Driver
