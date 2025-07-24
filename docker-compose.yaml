@@ -1,4 +1,21 @@
 services:
+  cibseven-init:
+    image: alpine:latest
+    container_name: cibseven-init
+    volumes:
+      - cibseven_libs:/tmp
+    command: >
+      sh -c "
+        apk add --no-cache wget &&
+        if [ ! -f /tmp/mariadb-java-client-3.4.2.jar ]; then
+          echo 'Downloading MariaDB JDBC driver...' &&
+          wget -O /tmp/mariadb-java-client-3.4.2.jar https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.4.2/mariadb-java-client-3.4.2.jar &&
+          echo 'MariaDB JDBC driver downloaded successfully'
+        else
+          echo 'MariaDB JDBC driver already exists, skipping download'
+        fi
+      "
+
   mariadb:
     image: mariadb:11.8
     container_name: mariadb
@@ -28,12 +45,14 @@ services:
     image: cibseven/cibseven:tomcat-2.1.0-SNAPSHOT
     container_name: cibseven
     depends_on:
+      cibseven-init:
+        condition: service_completed_successfully
       mariadb:
         condition: service_healthy
     ports:
       - "8080:8080"
     volumes:
-      - /home/oleg/cibseven/cibseven/mariadb/cibseven.sh:/camunda/cibseven.sh
+      - cibseven_libs:/camunda/lib:ro
     environment:
       # Database configuration
       DB_DRIVER: org.mariadb.jdbc.Driver
@@ -81,6 +100,8 @@ services:
 
 volumes:
   mariadb_data:
+    driver: local
+  cibseven_libs:
     driver: local
 
 networks:
