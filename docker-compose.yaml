@@ -6,10 +6,10 @@ services:
       - cibseven_libs:/tmp
     command: >
       sh -c "
-        apk add --no-cache wget &&
+        if [ ! -f /tmp/mariadb-java-client-3.4.2.jar ]; then
         if [ ! -f /tmp/mariadb-java-client-3.4.2.jar ]; then
           echo 'Downloading MariaDB JDBC driver...' &&
-          wget -O /tmp/mariadb-java-client-3.4.2.jar https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.4.2/mariadb-java-client-3.4.2.jar &&
+          curl -o /tmp/mariadb-java-client-3.4.2.jar https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.4.2/mariadb-java-client-3.4.2.jar &&
           echo 'MariaDB JDBC driver downloaded successfully'
         else
           echo 'MariaDB JDBC driver already exists, skipping download'
